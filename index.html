@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manoli's Tastes — Ορεκτικά</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;700;800&family=Noto+Sans+Hebrew:wght@300;400;700&family=Noto+Serif:ital,wght@1,400;1,700&family=Noto+Serif+Hebrew:wght@400;700&display=swap" rel="stylesheet">
+<!-- Same SVG flag set as masao: emoji flags render as bare letters on Windows -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.5.0/css/flag-icons.min.css">
+<style>
+  :root {
+    --navy: #1d4157;
+    --gold: #a4824a;
+    --price: #8a9fae;
+    --line: #a08348;
+    --paper: #ffffff;
+    --sans: "Manrope", "Noto Sans Hebrew", system-ui, sans-serif;
+    --serif: "Noto Serif", "Noto Serif Hebrew", Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  /* The printed menu is a white page, so it stays white regardless of OS theme */
+  html, body { margin: 0; background: var(--paper); color: var(--navy); font-family: var(--sans); }
+
+  .page { position: relative; max-width: 940px; margin: 0 auto; padding: 56px 88px 64px; }
+
+  /* Gold rule with the four-point star centred on it, top and bottom */
+  .rule { position: relative; height: 40px; }
+  .rule::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1.5px solid var(--line); }
+  .rule svg { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 18px; height: 40px; }
+
+  /* Vertical section titles in the margins, as on the PDF page */
+  .side { position: absolute; top: 120px; font-family: var(--serif); font-style: italic; font-size: 30px; line-height: 1; white-space: nowrap; writing-mode: vertical-rl; }
+  .side-el { left: 26px; color: var(--gold); font-weight: 400; transform: rotate(180deg); }
+  .side-tr { right: 26px; color: var(--navy); font-weight: 700; }
+  .mobile-head { display: none; }
+
+  .items { display: grid; grid-template-columns: 1fr 72px 1fr; column-gap: 18px; row-gap: 15px; padding: 28px 0 30px; }
+  .el { text-align: right; }
+  .price { text-align: center; color: var(--price); font-weight: 800; font-size: 15px; }
+  .tr { text-align: start; color: var(--gold); }
+  .name { font-weight: 800; font-size: 15px; }
+  .desc { font-weight: 300; font-size: 14px; line-height: 1.3; }
+  .block .desc { display: block; }
+  .el .desc { color: var(--navy); }
+
+  /* Language selector — ported from masao LanguageSelector.tsx */
+  .lang { position: fixed; top: 14px; right: 14px; z-index: 50; }
+  .lang-btn { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid #e3d7c3; border-radius: 999px; background: #fff; color: var(--navy); font: 500 14px var(--sans); cursor: pointer; transition: border-color .15s; }
+  .lang-btn:hover, .lang-btn:focus-visible { border-color: var(--gold); }
+  .lang-btn .code { font-weight: 700; text-transform: uppercase; }
+  .lang-list { position: absolute; right: 0; margin: 8px 0 0; padding: 4px 0; min-width: 176px; list-style: none; background: #fff; border: 1px solid #e3d7c3; border-radius: 12px; box-shadow: 0 12px 30px rgba(29,65,87,.18); overflow: hidden; }
+  .lang-list[hidden] { display: none; }
+  .lang-list button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 14px; border: 0; background: none; color: var(--navy); font: 600 14px var(--sans); text-align: start; cursor: pointer; }
+  .lang-list button:hover { background: #f7f2ea; }
+  .lang-list button[aria-selected="true"] { color: var(--gold); }
+  .lang-list .check { margin-inline-start: auto; }
+  .fi { border-radius: 2px; }
+
+  /* Phones: three columns don't fit, so the translation sits under the Greek */
+  @media (max-width: 720px) {
+    .page { padding: 64px 16px 40px; }
+    .side { display: none; }
+    .mobile-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-family: var(--serif); font-style: italic; font-size: 26px; padding-top: 12px; }
+    .mobile-head .h-el { color: var(--gold); }
+    .mobile-head .h-tr { color: var(--navy); font-weight: 700; }
+    .items { grid-template-columns: 1fr auto; row-gap: 0; column-gap: 14px; }
+    .el { text-align: start; grid-column: 1; padding-top: 14px; }
+    .price { grid-column: 2; grid-row: span 2; padding-top: 14px; }
+    .tr { grid-column: 1; padding-bottom: 2px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="lang">
+  <button class="lang-btn" id="langBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
+    <span class="fi" id="langFlag" aria-hidden="true"></span>
+    <span class="code" id="langCode"></span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <ul class="lang-list" id="langList" role="listbox" hidden></ul>
+</div>
+
+<main class="page">
+  <div class="rule"><svg viewBox="0 0 18 40" aria-hidden="true"><path d="M9 0 C9.6 15 10.5 19 18 20 C10.5 21 9.6 25 9 40 C8.4 25 7.5 21 0 20 C7.5 19 8.4 15 9 0Z" fill="#a08348"/></svg></div>
+  <div class="side side-el">Ορεκτικά</div>
+  <div class="side side-tr" id="sideTitle"></div>
+  <div class="mobile-head"><span class="h-el">Ορεκτικά</span><span class="h-tr" id="mobileTitle"></span></div>
+  <div class="items" id="items"></div>
+  <div class="rule"><svg viewBox="0 0 18 40" aria-hidden="true"><path d="M9 0 C9.6 15 10.5 19 18 20 C10.5 21 9.6 25 9 40 C8.4 25 7.5 21 0 20 C7.5 19 8.4 15 9 0Z" fill="#a08348"/></svg></div>
+</main>
+
+<script>
+// Greek is always shown; the guest only picks the second language.
+const LANGUAGES = [
+  { code: "en", label: "English",  flag: "gb" },
+  { code: "it", label: "Italiano", flag: "it" },
+  { code: "de", label: "Deutsch",  flag: "de" },
+  { code: "fr", label: "Français", flag: "fr" },
+  { code: "ru", label: "Русский",  flag: "ru" },
+  { code: "he", label: "עברית",    flag: "il", rtl: true },
+  { code: "no", label: "Norsk",    flag: "no" },
+  { code: "tr", label: "Türkçe",   flag: "tr" },
+  { code: "es", label: "Español",  flag: "es" },
+];
+
+const UI = {
+  en: { title: "Appetizers", select: "Select language" },
+  it: { title: "Antipasti",  select: "Seleziona la lingua" },
+  de: { title: "Vorspeisen", select: "Sprache wählen" },
+  fr: { title: "Entrées",    select: "Choisir la langue" },
+  ru: { title: "Закуски",    select: "Выберите язык" },
+  he: { title: "מנות פתיחה", select: "בחירת שפה" },
+  no: { title: "Forretter",  select: "Velg språk" },
+  tr: { title: "Mezeler",    select: "Dil seçin" },
+  es: { title: "Entrantes",  select: "Elegir idioma" },
+};
+
+// Each language is [name, description?]. `inline` keeps the description on the
+// same line as the name, matching how the printed menu sets those dishes.
+// Greek and English are copied from the printed menu.
+const ITEMS = [
+  { price: "1,50", inline: true,
+    el: ["Ψωμί", "(ανά άτομο)"], en: ["Bread", "(per person)"], it: ["Pane", "(a persona)"],
+    de: ["Brot", "(pro Person)"], fr: ["Pain", "(par personne)"], ru: ["Хлеб", "(на человека)"],
+    he: ["לחם", "(לאדם)"], no: ["Brød", "(per person)"], tr: ["Ekmek", "(kişi başı)"], es: ["Pan", "(por persona)"] },
+  { price: "7,00",
+    el: ["Μπρουσκέτα με αρωματισμένη ντομάτα", "& πέστο βασιλικού"],
+    en: ["Bruschetta with flavored tomato", "& basil pesto"],
+    it: ["Bruschetta con pomodoro aromatizzato", "e pesto al basilico"],
+    de: ["Bruschetta mit aromatisierter Tomate", "& Basilikumpesto"],
+    fr: ["Bruschetta à la tomate aromatisée", "& pesto de basilic"],
+    ru: ["Брускетта с ароматными томатами", "и песто из базилика"],
+    he: ["ברוסקטה עם עגבנייה מתובלת", "ופסטו בזיליקום"],
+    no: ["Bruschetta med smaksatt tomat", "& basilikumpesto"],
+    tr: ["Aromalı domatesli bruschetta", "fesleğen pesto ile"],
+    es: ["Bruschetta con tomate aromatizado", "y pesto de albahaca"] },
+  { price: "8,00",
+    el: ["Μπρουσκέτα με καπνιστό σολομό,", "κρέμα τυριού & άνηθο"],
+    en: ["Bruschetta with smoked salmon", "cream cheese & dill"],
+    it: ["Bruschetta con salmone affumicato,", "crema di formaggio e aneto"],
+    de: ["Bruschetta mit Räucherlachs,", "Frischkäse & Dill"],
+    fr: ["Bruschetta au saumon fumé,", "fromage frais & aneth"],
+    ru: ["Брускетта с копчёным лососем,", "сливочным сыром и укропом"],
+    he: ["ברוסקטה עם סלמון מעושן,", "גבינת שמנת ושמיר"],
+    no: ["Bruschetta med røkt laks,", "kremost & dill"],
+    tr: ["Füme somonlu bruschetta,", "krem peynir ve dereotu ile"],
+    es: ["Bruschetta con salmón ahumado,", "queso crema y eneldo"] },
+  { price: "16,00",
+    el: ["Μπρουσκέτα με αυγοτάραχο Μεσολογγίου,", "ταραμά, χόρτα, σύκα, καρύδια"],
+    en: ["Bruschetta with Messolonghi roe,", "tarama, greens, figs, nuts"],
+    it: ["Bruschetta con bottarga di Missolungi,", "taramà, erbette, fichi, noci"],
+    de: ["Bruschetta mit Bottarga aus Messolonghi,", "Taramas, Wildgemüse, Feigen, Walnüsse"],
+    fr: ["Bruschetta à la poutargue de Missolonghi,", "tarama, herbes sauvages, figues, noix"],
+    ru: ["Брускетта с боттаргой из Месолонги,", "тарамой, зеленью, инжиром и грецкими орехами"],
+    he: ["ברוסקטה עם בוטרגה ממסולונגי,", "טרמה, עלים ירוקים, תאנים, אגוזי מלך"],
+    no: ["Bruschetta med bottarga fra Messolonghi,", "tarama, villgrønt, fiken, valnøtter"],
+    tr: ["Mesolongi kefal havyarlı bruschetta,", "tarama, yeşillik, incir ve ceviz ile"],
+    es: ["Bruschetta con botarga de Mesolongi,", "tarama, verduras silvestres, higos, nueces"] },
+  { price: "15,00",
+    el: ["Φιλέτο χέλι καπνιστό", "με μελιτζανοσαλάτα, χουρμά & μους τυριού"],
+    en: ["Smoked eel fillet", "with eggplant salad, date & cheese mousse"],
+    it: ["Filetto di anguilla affumicata", "con insalata di melanzane, datteri e mousse di formaggio"],
+    de: ["Geräuchertes Aalfilet", "mit Auberginencreme, Dattel & Käsemousse"],
+    fr: ["Filet d'anguille fumée", "avec caviar d'aubergine, datte & mousse de fromage"],
+    ru: ["Филе копчёного угря", "с салатом из баклажанов, финиками и сырным муссом"],
+    he: ["פילה צלופח מעושן", "עם סלט חצילים, תמרים ומוס גבינה"],
+    no: ["Røkt ålefilet", "med auberginesalat, daddel & ostemousse"],
+    tr: ["Füme yılan balığı fileto", "patlıcan salatası, hurma ve peynir köpüğü ile"],
+    es: ["Filete de anguila ahumada", "con ensalada de berenjena, dátil y mousse de queso"] },
+  { price: "6,00",
+    el: ["Τζατζίκι / Τυροκαυτερή / Μελιτζανοσαλάτα"],
+    en: ["Tzatziki / Spicy Cheese Dip / Eggplant Salad"],
+    it: ["Tzatziki / Crema di feta piccante / Insalata di melanzane"],
+    de: ["Tzatziki / Pikante Schafskäsecreme / Auberginencreme"],
+    fr: ["Tzatziki / Feta pimentée / Caviar d'aubergine"],
+    ru: ["Цацики / Острая сырная паста / Салат из баклажанов"],
+    he: ["צזיקי / ממרח פטה חריף / סלט חצילים"],
+    no: ["Tzatziki / Krydret fetakrem / Auberginesalat"],
+    tr: ["Cacık / Acılı peynir ezmesi / Patlıcan salatası"],
+    es: ["Tzatziki / Crema de feta picante / Ensalada de berenjena"] },
+  { price: "7,00", inline: true,
+    el: ["Ταραμοσαλάτα"], en: ["Taramosalata"],
+    it: ["Taramosalata", "(crema di uova di pesce)"], de: ["Taramas", "(Fischrogencreme)"],
+    fr: ["Tarama"], ru: ["Тарамасалата", "(паштет из рыбной икры)"],
+    he: ["טרמוסלטה", "(ממרח ביצי דגים)"], no: ["Taramasalat", "(fiskerognkrem)"],
+    tr: ["Tarama"], es: ["Taramosalata", "(crema de huevas de pescado)"] },
+  { price: "6,00",
+    el: ["Φάβα Σαντορίνης", "με καραμελωμένα κρεμμύδια"],
+    en: ["Santorini Fava", "(Broad Beans) with caramelized onions"],
+    it: ["Fava di Santorini", "(purea di piselli gialli) con cipolle caramellate"],
+    de: ["Santorini-Fava", "(Gelberbsenpüree) mit karamellisierten Zwiebeln"],
+    fr: ["Fava de Santorin", "(purée de pois jaunes) aux oignons caramélisés"],
+    ru: ["Фава Санторини", "(пюре из жёлтого гороха) с карамелизированным луком"],
+    he: ["פאבה סנטוריני", "(ממרח אפונה צהובה) עם בצל מקורמל"],
+    no: ["Fava fra Santorini", "(gul ertepuré) med karamellisert løk"],
+    tr: ["Santorini favası", "(sarı bezelye ezmesi) karamelize soğan ile"],
+    es: ["Fava de Santorini", "(puré de guisantes amarillos) con cebolla caramelizada"] },
+  { price: "12,00",
+    el: ["Κεφτεδάκια σαγανάκι", "με γραβιέρα και μπούκοβο"],
+    en: ["Meatballs saganaki", "with gruyere and bukovo"],
+    it: ["Polpettine saganaki", "con graviera e peperoncino in fiocchi"],
+    de: ["Fleischbällchen Saganaki", "mit Graviera-Käse und Chiliflocken"],
+    fr: ["Boulettes saganaki", "au graviera et piment en flocons"],
+    ru: ["Тефтельки саганаки", "с сыром гравьера и хлопьями чили"],
+    he: ["קציצות סגנאקי", "עם גבינת גרוויירה ופתיתי צ'ילי"],
+    no: ["Kjøttboller saganaki", "med graviera-ost og chiliflak"],
+    tr: ["Saganaki köfte", "gravyer peyniri ve pul biber ile"],
+    es: ["Albóndigas saganaki", "con queso graviera y chile en escamas"] },
+  { price: "7,00",
+    el: ["Λουκάνικο σωτέ", "με πιπεριές, κρεμμύδι και αυγό"],
+    en: ["Sauteed sausage", "with peppers, onion and egg"],
+    it: ["Salsiccia saltata", "con peperoni, cipolla e uovo"],
+    de: ["Sautierte Wurst", "mit Paprika, Zwiebel und Ei"],
+    fr: ["Saucisse sautée", "aux poivrons, oignon et œuf"],
+    ru: ["Обжаренная колбаска", "с перцем, луком и яйцом"],
+    he: ["נקניקייה מוקפצת", "עם פלפלים, בצל וביצה"],
+    no: ["Stekt pølse", "med paprika, løk og egg"],
+    tr: ["Sosis sote", "biber, soğan ve yumurta ile"],
+    es: ["Salchicha salteada", "con pimientos, cebolla y huevo"] },
+  { price: "8,00",
+    el: ["Κατσικίσιο Τυρί σε τραγανή κρούστα", "από δημητριακά & μέλι"],
+    en: ["Goat Cheese in crispy crust", "from grains & honey"],
+    it: ["Formaggio di capra in crosta croccante", "di cereali e miele"],
+    de: ["Ziegenkäse in knuspriger Kruste", "aus Getreide & Honig"],
+    fr: ["Fromage de chèvre en croûte croustillante", "de céréales & miel"],
+    ru: ["Козий сыр в хрустящей корочке", "из злаков с мёдом"],
+    he: ["גבינת עיזים בציפוי פריך", "של דגנים ודבש"],
+    no: ["Chèvre i sprø skorpe", "av korn & honning"],
+    tr: ["Çıtır tahıl kaplı keçi peyniri", "bal ile"],
+    es: ["Queso de cabra en costra crujiente", "de cereales y miel"] },
+  { price: "6,00", inline: true,
+    el: ["Σαγανάκι"], en: ["Saganaki", "(Fried Cheese)"], it: ["Saganaki", "(formaggio fritto)"],
+    de: ["Saganaki", "(gebackener Käse)"], fr: ["Saganaki", "(fromage frit)"], ru: ["Саганаки", "(жареный сыр)"],
+    he: ["סגנאקי", "(גבינה מטוגנת)"], no: ["Saganaki", "(stekt ost)"], tr: ["Saganaki", "(kızarmış peynir)"],
+    es: ["Saganaki", "(queso frito)"] },
+  { price: "7,00", inline: true,
+    el: ["Χαλούμι σχάρας", "με μαρμελάδα ντομάτας"],
+    en: ["Grilled halloumi", "with tomato jam"],
+    it: ["Halloumi alla griglia", "con marmellata di pomodoro"],
+    de: ["Gegrillter Halloumi", "mit Tomatenmarmelade"],
+    fr: ["Halloumi grillé", "à la confiture de tomates"],
+    ru: ["Халуми на гриле", "с томатным джемом"],
+    he: ["חלומי על הגריל", "עם ריבת עגבניות"],
+    no: ["Grillet halloumi", "med tomatsyltetøy"],
+    tr: ["Izgara hellim", "domates reçeli ile"],
+    es: ["Halloumi a la parrilla", "con mermelada de tomate"] },
+  { price: "15,00",
+    el: ["Αγγινάρα γεμιστή", "με γαρίδα, κρέμα ταραμά και τρίμμα αυγοτάραχο"],
+    en: ["Stuffed artichoke", "with shrimp, taramosalata cream, and grated bottarga"],
+    it: ["Carciofo ripieno", "con gamberi, crema di taramà e bottarga grattugiata"],
+    de: ["Gefüllte Artischocke", "mit Garnelen, Taramacreme und geriebener Bottarga"],
+    fr: ["Artichaut farci", "aux crevettes, crème de tarama et poutargue râpée"],
+    ru: ["Фаршированный артишок", "с креветками, кремом из тарамы и тёртой боттаргой"],
+    he: ["ארטישוק ממולא", "עם שרימפס, קרם טרמה ובוטרגה מגוררת"],
+    no: ["Fylt artisjokk", "med reker, taramakrem og revet bottarga"],
+    tr: ["Enginar dolması", "karides, tarama kreması ve rendelenmiş kefal havyarı ile"],
+    es: ["Alcachofa rellena", "con gambas, crema de tarama y botarga rallada"] },
+  { price: "8,00", inline: true,
+    el: ["Μανιτάρια Γεμιστά", "με τραγανό μπέικον & τυρί"],
+    en: ["Mushrooms Stuffed", "with crispy bacon & cheese"],
+    it: ["Funghi ripieni", "con pancetta croccante e formaggio"],
+    de: ["Gefüllte Champignons", "mit knusprigem Speck & Käse"],
+    fr: ["Champignons farcis", "au bacon croustillant & fromage"],
+    ru: ["Фаршированные грибы", "с хрустящим беконом и сыром"],
+    he: ["פטריות ממולאות", "עם בייקון פריך וגבינה"],
+    no: ["Fylte sopp", "med sprøstekt bacon & ost"],
+    tr: ["Mantar dolması", "çıtır bacon ve peynir ile"],
+    es: ["Champiñones rellenos", "con bacon crujiente y queso"] },
+  { price: "7,00",
+    el: ["Ψητά Λαχανικά με Βινεγκρέτ Μελιού", "(μανιτάρια, μελιτζάνες, κολοκύθια, πιπεριά)"],
+    en: ["Grilled Vegetables with Honey Vinaigrette", "(mushrooms, eggplants, zucchini, peppers)"],
+    it: ["Verdure grigliate con vinaigrette al miele", "(funghi, melanzane, zucchine, peperoni)"],
+    de: ["Gegrilltes Gemüse mit Honig-Vinaigrette", "(Pilze, Auberginen, Zucchini, Paprika)"],
+    fr: ["Légumes grillés, vinaigrette au miel", "(champignons, aubergines, courgettes, poivrons)"],
+    ru: ["Овощи на гриле с медовой заправкой", "(грибы, баклажаны, кабачки, перец)"],
+    he: ["ירקות צלויים בוויניגרט דבש", "(פטריות, חצילים, קישואים, פלפלים)"],
+    no: ["Grillede grønnsaker med honningvinaigrette", "(sopp, aubergine, squash, paprika)"],
+    tr: ["Ballı vinegret soslu ızgara sebzeler", "(mantar, patlıcan, kabak, biber)"],
+    es: ["Verduras a la parrilla con vinagreta de miel", "(champiñones, berenjenas, calabacines, pimientos)"] },
+  { price: "6,00",
+    el: ["Τυροκροκέτες"], en: ["Fried Cheese Croquettes"], it: ["Crocchette di formaggio"],
+    de: ["Käsekroketten"], fr: ["Croquettes de fromage"], ru: ["Сырные крокеты"],
+    he: ["קרוקטי גבינה"], no: ["Ostekroketter"], tr: ["Peynir kroketi"], es: ["Croquetas de queso"] },
+  { price: "12,00",
+    el: ["Γαρίδες σε Φωλιά Καταΐφι", "με γλυκόξινη σάλτσα"],
+    en: ["Shrimp in Kataifi Pastry Nest", "with sweet & sour sauce"],
+    it: ["Gamberi in nido di pasta kataifi", "con salsa agrodolce"],
+    de: ["Garnelen im Kataifi-Teignest", "mit süß-saurer Sauce"],
+    fr: ["Crevettes en nid de pâte kataïfi", "sauce aigre-douce"],
+    ru: ["Креветки в гнезде из теста катаифи", "с кисло-сладким соусом"],
+    he: ["שרימפס בקן בצק קדאיף", "ברוטב חמוץ-מתוק"],
+    no: ["Reker i rede av kataifi-deig", "med sursøt saus"],
+    tr: ["Kadayıflı karides", "tatlı ekşi sos ile"],
+    es: ["Gambas en nido de masa kataifi", "con salsa agridulce"] },
+  { price: "8,00", inline: true,
+    el: ["Ποικιλία Μανιταριών", "με λιαστή ντομάτα, ούζο και κρέμα γάλακτος"],
+    en: ["Mushroom Variety", "with sundried tomato, ouzo & whipped cream"],
+    it: ["Funghi misti", "con pomodori secchi, ouzo e panna"],
+    de: ["Pilzvariation", "mit getrockneten Tomaten, Ouzo und Sahne"],
+    fr: ["Assortiment de champignons", "aux tomates séchées, ouzo et crème"],
+    ru: ["Ассорти из грибов", "с вялеными томатами, узо и сливками"],
+    he: ["מבחר פטריות", "עם עגבניות מיובשות, אוזו ושמנת"],
+    no: ["Blandet sopp", "med soltørket tomat, ouzo og fløte"],
+    tr: ["Karışık mantar", "kurutulmuş domates, uzo ve krema ile"],
+    es: ["Variedad de setas", "con tomate seco, ouzo y nata"] },
+  { price: "10,00",
+    el: ["Μιλφέιγ Μελιτζάνας", "με κατσικίσιο τυρί, ντομάτα & προσούτο"],
+    en: ["Eggplant Mille-Feuille", "with goat cheese, tomato & prosciutto"],
+    it: ["Millefoglie di melanzane", "con formaggio di capra, pomodoro e prosciutto crudo"],
+    de: ["Auberginen-Millefeuille", "mit Ziegenkäse, Tomate & Prosciutto"],
+    fr: ["Mille-feuille d'aubergine", "au fromage de chèvre, tomate & prosciutto"],
+    ru: ["Мильфей из баклажанов", "с козьим сыром, томатами и прошутто"],
+    he: ["מילפיי חצילים", "עם גבינת עיזים, עגבנייה ופרושוטו"],
+    no: ["Aubergine-millefeuille", "med chèvre, tomat & prosciutto"],
+    tr: ["Patlıcan milföy", "keçi peyniri, domates ve prosciutto ile"],
+    es: ["Milhojas de berenjena", "con queso de cabra, tomate y jamón curado"] },
+  { price: "15,00",
+    el: ["Καρπάτσιο Μοσχάρι με παρμεζάνα,", "ρόκα & λάδι τρούφας"],
+    en: ["Beef Carpaccio with parmesan,", "arugula & truffle oil"],
+    it: ["Carpaccio di manzo con parmigiano,", "rucola e olio al tartufo"],
+    de: ["Rindercarpaccio mit Parmesan,", "Rucola & Trüffelöl"],
+    fr: ["Carpaccio de bœuf au parmesan,", "roquette & huile de truffe"],
+    ru: ["Карпаччо из говядины с пармезаном,", "руколой и трюфельным маслом"],
+    he: ["קרפצ'יו בקר עם פרמזן,", "רוקט ושמן כמהין"],
+    no: ["Oksecarpaccio med parmesan,", "ruccola & trøffelolje"],
+    tr: ["Parmesanlı dana carpaccio,", "roka ve trüf yağı ile"],
+    es: ["Carpaccio de ternera con parmesano,", "rúcula y aceite de trufa"] },
+  { price: "18,00",
+    el: ["Ταρτάρ Μοσχάρι", "με λιαστή ντομάτα, κάπαρη, κρεμμύδι, dijon & λάδι τρούφας"],
+    en: ["Beef tartare", "with sun-dried tomato, capers, onion, dijon & truffle oil"],
+    it: ["Tartare di manzo", "con pomodori secchi, capperi, cipolla, senape di Digione e olio al tartufo"],
+    de: ["Rindertatar", "mit getrockneten Tomaten, Kapern, Zwiebel, Dijon-Senf & Trüffelöl"],
+    fr: ["Tartare de bœuf", "aux tomates séchées, câpres, oignon, moutarde de Dijon & huile de truffe"],
+    ru: ["Тартар из говядины", "с вялеными томатами, каперсами, луком, дижонской горчицей и трюфельным маслом"],
+    he: ["טרטר בקר", "עם עגבניות מיובשות, צלפים, בצל, חרדל דיז'ון ושמן כמהין"],
+    no: ["Oksetartar", "med soltørket tomat, kapers, løk, dijonsennep & trøffelolje"],
+    tr: ["Dana tartar", "kurutulmuş domates, kapari, soğan, Dijon hardalı ve trüf yağı ile"],
+    es: ["Tartar de ternera", "con tomate seco, alcaparras, cebolla, mostaza de Dijon y aceite de trufa"] },
+  { price: "10,00",
+    el: ["Κολοκυθοκεφτέδες με Γαρίδα"], en: ["Zucchini Patties with Shrimp"], it: ["Polpette di zucchine con gamberi"],
+    de: ["Zucchinipuffer mit Garnelen"], fr: ["Beignets de courgette aux crevettes"], ru: ["Кабачковые оладьи с креветками"],
+    he: ["לביבות קישואים עם שרימפס"], no: ["Squashkaker med reker"], tr: ["Karidesli mücver"], es: ["Buñuelos de calabacín con gambas"] },
+];
+
+// Self-check: every dish must exist in Greek and every offered language.
+for (const item of ITEMS)
+  for (const code of ["el", ...LANGUAGES.map((l) => l.code)])
+    console.assert(item[code] && item[code][0], `Missing ${code} for`, item.el && item.el[0]);
+
+const STORAGE_KEY = "manolis-lang";
+const DEFAULT_LANG = "en";
+const isSupported = (code) => LANGUAGES.some((l) => l.code === code);
+
+// Stored choice wins; otherwise a French phone opens straight in French.
+function initialLang() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (isSupported(stored)) return stored;
+  } catch {}
+  const browser = (navigator.language || "").slice(0, 2).toLowerCase();
+  const mapped = browser === "nb" || browser === "nn" ? "no" : browser === "iw" ? "he" : browser;
+  return isSupported(mapped) ? mapped : DEFAULT_LANG;
+}
+
+function cell(className, [name, desc], item, lang) {
+  const div = document.createElement("div");
+  div.className = className + (item.inline ? "" : " block");
+  if (lang) {
+    div.lang = lang;
+    div.dir = LANGUAGES.find((l) => l.code === lang).rtl ? "rtl" : "ltr";
+  }
+  const nameEl = document.createElement("span");
+  nameEl.className = "name";
+  nameEl.textContent = name;
+  div.append(nameEl);
+  if (desc) {
+    const descEl = document.createElement("span");
+    descEl.className = "desc";
+    descEl.textContent = (item.inline ? " " : "") + desc;
+    div.append(descEl);
+  }
+  return div;
+}
+
+function render(lang) {
+  const meta = LANGUAGES.find((l) => l.code === lang);
+  const dir = meta.rtl ? "rtl" : "ltr";
+
+  const list = document.getElementById("items");
+  list.replaceChildren();
+  for (const item of ITEMS) {
+    const price = document.createElement("div");
+    price.className = "price";
+    price.textContent = item.price;
+    list.append(cell("el", item.el, item), price, cell("tr", item[lang], item, lang));
+  }
+
+  for (const id of ["sideTitle", "mobileTitle"]) {
+    const el = document.getElementById(id);
+    el.textContent = UI[lang].title;
+    el.lang = lang;
+    el.dir = dir;
+  }
+
+  document.getElementById("langFlag").className = `fi fi-${meta.flag}`;
+  document.getElementById("langCode").textContent = meta.code;
+  document.getElementById("langBtn").setAttribute("aria-label", UI[lang].select);
+  renderOptions(lang);
+}
+
+const btn = document.getElementById("langBtn");
+const listbox = document.getElementById("langList");
+
+function renderOptions(lang) {
+  listbox.replaceChildren(...LANGUAGES.map((l) => {
+    const li = document.createElement("li");
+    const option = document.createElement("button");
+    option.type = "button";
+    option.setAttribute("role", "option");
+    option.setAttribute("aria-selected", String(l.code === lang));
+    option.innerHTML = `<span class="fi fi-${l.flag}" aria-hidden="true"></span><span></span>`;
+    option.lastChild.textContent = l.label;
+    if (l.code === lang) option.insertAdjacentHTML("beforeend", '<span class="check" aria-hidden="true">✓</span>');
+    option.addEventListener("click", () => {
+      try { localStorage.setItem(STORAGE_KEY, l.code); } catch {}
+      render(l.code);
+      setOpen(false);
+      btn.focus();
+    });
+    li.append(option);
+    return li;
+  }));
+}
+
+function setOpen(open) {
+  listbox.hidden = !open;
+  btn.setAttribute("aria-expanded", String(open));
+}
+
+btn.addEventListener("click", () => setOpen(listbox.hidden));
+// Close on outside click / Escape, same as masao.
+document.addEventListener("mousedown", (e) => {
+  if (!listbox.hidden && !e.target.closest(".lang")) setOpen(false);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") setOpen(false);
+});
+
+render(initialLang());
+</script>
+</body>
+</html>
